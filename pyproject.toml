@@ -29,15 +29,10 @@ ai = [
 Repository = "https://github.com/WoosterTech/YNABMemo"
 Issues = "https://github.com/WoosterTech/YNABMemo/issues"
 
-[tool.hatch.version]
-path = "src/ynabmemo/__init__.py"
-
-# [project.scripts]
-# yna = "ynamazon.cli.cli:cli"
-
 [dependency-groups]
 dev = [
     "basedpyright>=1.29.2",
+    "commitizen>=4.8.3",
     "deptry>=0.23.0",
     "pre-commit>=4.2.0",
     "ruff>=0.11.4",
@@ -51,13 +46,63 @@ test = [
     "pytest-sugar>=1.0.0",
 ]
 
+[build-system]
+requires = ["hatchling", "uv-dynamic-versioning"]
+build-backend = "hatchling.build"
+
 [tool.pytest.ini_options]
 minversion = "6.0"
 python_files = ["test_*.py"]
 
-[build-system]
-requires = ["hatchling"]
-build-backend = "hatchling.build"
+[tool.hatch.version]
+source = "uv-dynamic-versioning"
+
+[tool.uv-dynamic-versioning]
+vcs = "git"
+style = "pep440"
+bump = "true"
+
+[tool.hatch.build.targets.wheel]
+# The source location for the package.
+packages = ["src/ynabmemo"]
 
 [tool.uv.sources]
 attrmagic = { git = "https://github.com/WoosterTech/AttrMagic.git" }
+
+[tool.basedpyright]
+# BasedPyright currently seems like the best type checker option, much faster
+# than mypy and with a good extension for VSCode/Cursor.
+# https://marketplace.visualstudio.com/items?itemName=detachhead.basedpyright
+# https://docs.basedpyright.com/latest/configuration/config-files/#sample-pyprojecttoml-file
+include = ["src", "tests", "devtools"]
+# By default BasedPyright is very strict, so you almost certainly want to disable
+# some of the rules.
+# First, these turn off warnings about (yes) how you ignore warnings:
+reportIgnoreCommentWithoutRule = false
+reportUnnecessaryTypeIgnoreComment = false
+# A few typically noisy warnings are next.
+# How many you enable is up to you. The first few are off by default, but you can
+# comment/uncomment these as desired:
+reportMissingTypeStubs = false
+reportUnusedCallResult = false
+reportAny = false
+reportExplicitAny = false
+reportImplicitStringConcatenation = false
+reportUnreachable = false
+# reportPrivateImportUsage = false
+# reportPrivateLocalImportUsage = false
+# reportMissingImports = false
+# reportUnnecessaryIsInstance = false
+# reportUnknownVariableType = false
+# reportUnknownArgumentType = false
+
+[tool.commitizen]
+name = "cz_conventional_commits"
+tag_format = "$version"
+version_scheme = "pep440"
+version_provider = "scm"
+update_changelog_on_bump = true
+major_version_zero = true
+
+[tool.deptry.per_rule_ignores]
+DEP003 = ["ynamazon"]
