@@ -1,12 +1,12 @@
 [project]
-name = "YNAmazon"
+name = "YNABMemo"
 dynamic = ["version"]
-description = "YNAmazon - A program to annotate YNAB transactions with Amazon order info "
+description = "YNABMemo - A program to annotate YNAB transactions with Amazon order info "
 readme = "README.md"
-requires-python = ">=3.9,<3.13"
+requires-python = ">=3.11,<3.14"
 license = "MIT"
 dependencies = [
-    "amazon-orders>=3.2.15",
+    "amazon-orders>=3.2.15,<4.0.0",
     "loguru>=0.7.3",
     "pydantic[email]>=2.11.2",
     "pydantic-settings>=2.8.1",
@@ -16,27 +16,28 @@ dependencies = [
     "pydantic-core>=2.33.1",
     "furl>=2.1.4",
     "requests>=2.30.0",
+    "attrmagic",
 ]
 
 [project.optional-dependencies]
 ai = [
-    "openai>=1.12.0",  # OpenAI Python client for AI summarization
+    "openai>=1.12.0", # OpenAI Python client for AI summarization
 ]
 
 [project.urls]
-Repository = "https://github.com/DanielKarp/YNAmazon"
-Issues = "https://github.com/DanielKarp/YNAmazon/issues"
+Repository = "https://github.com/WoosterTech/YNABMemo"
+Issues = "https://github.com/WoosterTech/YNABMemo/issues"
 
 [tool.hatch.version]
-path = "src/ynamazon/__init__.py"
+path = "src/ynabmemo/__init__.py"
 
-[project.scripts]
-yna = "ynamazon.cli.cli:cli"
+# [project.scripts]
+# yna = "ynamazon.cli.cli:cli"
 
 [dependency-groups]
 dev = [
+    "basedpyright>=1.29.2",
     "deptry>=0.23.0",
-    "mypy>=1.15.0",
     "pre-commit>=4.2.0",
     "ruff>=0.11.4",
     "types-requests>=2.32.0.20250328",
@@ -57,10 +58,5 @@ python_files = ["test_*.py"]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
 
-
-[[tool.mypy.overrides]]
-module= ["amazonorders.*"]
-ignore_missing_imports = true
-
-# [tool.deptry]
-# known_first_party = ["ynamazon"]
+[tool.uv.sources]
+attrmagic = { git = "https://github.com/WoosterTech/AttrMagic.git" }

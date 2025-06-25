@@ -1,6 +1,6 @@
 from datetime import date
 from decimal import Decimal
-from typing import Annotated, Union  # ,  Self  # not available python <3.11
+from typing import Annotated, Self
 
 from amazonorders.entity.order import Order
 from amazonorders.entity.transaction import Transaction
@@ -14,6 +14,14 @@ from rich.table import Table
 
 from .settings import settings
 from .types_pydantic import AmazonItemType
+
+
+def _float_to_decimal(value: float, *, quantize: Decimal | None = None) -> Decimal:
+    """Converts a float to a Decimal."""
+    pre_value = Decimal(str(value))
+    if quantize is not None:
+        return pre_value.quantize(quantize)
+    return pre_value
 
 
 class AmazonTransactionWithOrderInfo(BaseModel):
@@ -34,21 +42,20 @@ class AmazonTransactionWithOrderInfo(BaseModel):
         """Inverts the value."""
         return -value
 
-    # TODO: when dropping support for python <3.11, use Self
     @classmethod
     def from_transaction_and_orders(
         cls, orders_dict: "dict[str, Order]", transaction: Transaction
-    ):
+    ) -> Self:
         """Creates an instance from an order and transactions."""
         order = orders_dict.get(transaction.order_number)
         if order is None:
             raise ValueError(f"Order with number {transaction.order_number} not found.")
         return cls(
             completed_date=transaction.completed_date,
-            transaction_total=transaction.grand_total,
-            order_total=order.grand_total,
+            transaction_total=_float_to_decimal(transaction.grand_total),
+            order_total=_float_to_decimal(order.grand_total),
             order_number=order.order_number,
-            order_link=order.order_details_link,
+            order_link=order.order_details_link,  # pyright: ignore[reportArgumentType]
             items=order.items,
         )
 
@@ -73,9 +80,9 @@ class AmazonConfig(BaseModel):
 
 
 def get_amazon_transactions(
-    order_years: Union[list[int], None] = None,
+    order_years: list[int] | None = None,
     transaction_days: int = 31,
-    configuration: Union[AmazonConfig, None] = None,
+    configuration: AmazonConfig | None = None,
 ) -> list[AmazonTransactionWithOrderInfo]:
     """Returns a list of transactions with order info.
 
@@ -117,7 +124,7 @@ def get_amazon_transactions(
 
 
 def _fetch_amazon_order_history(
-    *, session: AmazonSession, years: Union[list[int], None] = None
+    *, session: AmazonSession, years: list[int] | None = None
 ) -> list[Order]:
     """Returns a list of Amazon orders.
 
@@ -137,7 +144,7 @@ def _fetch_amazon_order_history(
     for year in years:
         if len(year_str := str(year)) == 2:
             year_str = "20" + year_str
-        all_orders.extend(amazon_orders.get_order_history(year=year_str))
+        all_orders.extend(amazon_orders.get_order_history(year=int(year_str)))
     all_orders.sort(key=lambda order: order.order_placed_date)
 
     return all_orders
@@ -194,8 +201,8 @@ def _truncate_title(title: str, max_length: int = 20) -> str:
 
 
 def locate_amazon_transaction_by_amount(
-    amazon_trans: list[AmazonTransactionWithOrderInfo], amount: Union[float, Decimal]
-) -> Union[int, None]:
+    amazon_trans: list[AmazonTransactionWithOrderInfo], amount: float | Decimal
+) -> int | None:
     """Given an amount, locate a matching Amazon transaction.
 
     Args:
